@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CourseItem {
+  id         String   @id @default(cuid())
+  nom        String
+  prix       Float?
+  categorie  String   @default("Autre")
+  taxable    Boolean  @default(true)
+  coche      Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  updatedBy  String?
+}
+
+model Tache {
+  id          String    @id @default(cuid())
+  nom         String
+  description String?
+  lieu        String?
+  priorite    String    @default("normale")
+  assigneA    String?
+  dateLimite  DateTime?
+  completee   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String?
+}

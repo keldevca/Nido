@@ -1,0 +1,1 @@
+ALTER TABLE "CourseItem" ADD COLUMN "taxable" BOOLEAN NOT NULL DEFAULT true;
