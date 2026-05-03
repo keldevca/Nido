@@ -39,7 +39,7 @@
 ## 🚀 Quick start
 
 ```bash
-git clone https://github.com/<your-username>/nido.git
+git clone https://github.com/keldevca/Nido.git
 cd nido
 cp .env.example .env
 # edit .env (see below)
