@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, CheckSquare, LogOut } from "lucide-react";
+import { ShoppingCart, CheckSquare, LogOut, Bird } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { apiPath } from "@/lib/api";
 import NotificationsBell from "./NotificationsBell";
+import PushToggle from "./PushToggle";
 
 const tabs = [
   { href: "/courses", label: "Courses", icon: ShoppingCart },
@@ -21,17 +22,28 @@ export default function Navigation() {
     <>
       <header className="sticky top-0 z-40 bg-base-900/85 backdrop-blur-xl border-b border-slate-800 pt-[env(safe-area-inset-top)]">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <span className="text-xl font-bold text-white tracking-tight">
-            <span className="text-accent">Ni</span>do
-          </span>
+          <Link href="/courses" className="flex items-center gap-2 group">
+            <span className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-accent to-accent-dark shadow-lg shadow-accent/30 ring-1 ring-white/10 group-active:scale-95 transition-transform">
+              <Bird size={20} strokeWidth={2.4} className="text-white" />
+            </span>
+            <span className="text-xl font-bold text-white tracking-tight">
+              <span className="text-accent">Ni</span>do
+            </span>
+          </Link>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {prenom && (
-              <span className="hidden sm:inline text-sm text-slate-300 mr-2">
-                Salut, <span className="text-white font-medium">{prenom}</span>
-              </span>
+              <div className="flex items-center gap-1.5 mr-1 px-2 py-1 rounded-full bg-base-700/60 border border-slate-700/60">
+                <span className="w-5 h-5 rounded-full bg-gradient-to-br from-accent to-accent-dark text-white text-[11px] font-bold flex items-center justify-center">
+                  {prenom.charAt(0).toUpperCase()}
+                </span>
+                <span className="text-sm text-white font-medium pr-0.5">
+                  {prenom}
+                </span>
+              </div>
             )}
             <NotificationsBell />
+            <PushToggle />
             <button
               onClick={() => signOut({ callbackUrl: apiPath("/login") })}
               className="btn-ghost p-2 text-slate-400 hover:text-red-400"

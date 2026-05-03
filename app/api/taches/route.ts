@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/api";
+import { sendPushToOthers } from "@/lib/push";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -28,5 +29,16 @@ export async function POST(req: Request) {
       updatedBy: user,
     },
   });
+
+  sendPushToOthers(
+    {
+      title: `${user} a ajouté une tâche`,
+      body: tache.nom,
+      url: "/taches",
+      tag: "nido-taches",
+    },
+    user
+  ).catch(() => {});
+
   return NextResponse.json(tache, { status: 201 });
 }

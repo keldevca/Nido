@@ -21,11 +21,10 @@ export type Tache = {
   completee: boolean;
 };
 
-export const LIEUX = ["Maison", "Travail", "Courses", "École", "Autre"];
+import { MEMBERS } from "@/lib/users";
 
-const USER1 = process.env.NEXT_PUBLIC_USER1_NAME || "Membre1";
-const USER2 = process.env.NEXT_PUBLIC_USER2_NAME || "Membre2";
-export const ASSIGNES = [USER1, USER2, "Ensemble"];
+export const LIEUX = ["Maison", "Travail", "Courses", "École", "Autre"];
+export const ASSIGNES = [...MEMBERS, "Ensemble"];
 
 const PRIORITE_ORDER: Record<string, number> = { haute: 0, normale: 1, basse: 2 };
 

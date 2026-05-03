@@ -7,11 +7,14 @@ export type Categorie = {
 };
 
 export const CATEGORIES: Categorie[] = [
+  // Top 5 (les plus utilisées)
+  { nom: "Produits laitiers", taxable: false },
+  { nom: "Épicerie", taxable: false },
   { nom: "Fruits & Légumes", taxable: false },
   { nom: "Viandes & Poissons", taxable: false },
-  { nom: "Produits laitiers", taxable: false },
+  { nom: "Hygiène & Beauté", taxable: true },
+  // Le reste
   { nom: "Pain & Céréales", taxable: false },
-  { nom: "Épicerie", taxable: false },
   { nom: "Surgelés", taxable: false },
   { nom: "Boissons (jus, eau, café)", taxable: false },
   { nom: "Collations & Bonbons", taxable: true },
@@ -19,7 +22,6 @@ export const CATEGORIES: Categorie[] = [
   { nom: "Aliments préparés", taxable: true },
   { nom: "Vêtements", taxable: true },
   { nom: "Pharmacie / Santé", taxable: true },
-  { nom: "Hygiène & Beauté", taxable: true },
   { nom: "Maison & Entretien", taxable: true },
   { nom: "Autre", taxable: true },
 ];

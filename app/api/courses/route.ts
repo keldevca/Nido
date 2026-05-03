@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/api";
+import { sendPushToOthers } from "@/lib/push";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -21,10 +22,23 @@ export async function POST(req: Request) {
     data: {
       nom: body.nom,
       prix: body.prix ?? null,
+      quantite: body.quantite && body.quantite > 0 ? body.quantite : 1,
+      photo: body.photo ?? null,
       categorie: body.categorie ?? "Autre",
       taxable: body.taxable ?? true,
       updatedBy: user,
     },
   });
+
+  sendPushToOthers(
+    {
+      title: `${user} a ajouté un article`,
+      body: item.nom,
+      url: "/courses",
+      tag: "nido-courses",
+    },
+    user
+  ).catch(() => {});
+
   return NextResponse.json(item, { status: 201 });
 }

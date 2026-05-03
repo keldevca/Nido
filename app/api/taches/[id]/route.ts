@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/api";
+import { sendPushToOthers } from "@/lib/push";
 
 export async function PATCH(
   req: Request,
@@ -15,6 +16,20 @@ export async function PATCH(
     where: { id: params.id },
     data: { ...body, updatedBy: user },
   });
+
+  if (typeof body.completee === "boolean") {
+    const verbe = body.completee ? "a complété" : "a rouvert";
+    sendPushToOthers(
+      {
+        title: `${user} ${verbe} une tâche`,
+        body: tache.nom,
+        url: "/taches",
+        tag: "nido-taches",
+      },
+      user
+    ).catch(() => {});
+  }
+
   return NextResponse.json(tache);
 }
 

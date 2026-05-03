@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ShoppingCart, LogIn } from "lucide-react";
+import { Bird, LogIn, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -34,10 +35,10 @@ export default function LoginPage() {
     <div className="min-h-dvh bg-base-900 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center gap-3 mb-8">
-          <div className="w-14 h-14 bg-accent/20 rounded-2xl flex items-center justify-center">
-            <ShoppingCart size={28} className="text-accent" />
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center bg-gradient-to-br from-accent to-accent-dark shadow-xl shadow-accent/30 ring-1 ring-white/10">
+            <Bird size={40} strokeWidth={2.2} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="text-3xl font-bold text-white tracking-tight">
             <span className="text-accent">Ni</span>do
           </h1>
           <p className="text-slate-400 text-sm">Courses & tâches partagées</p>
@@ -58,14 +59,25 @@ export default function LoginPage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm text-slate-400 font-medium">Mot de passe</label>
-            <input
-              type="password"
-              className="input"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="input w-full pr-10"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-200"
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {error && (

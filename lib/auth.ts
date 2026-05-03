@@ -1,18 +1,13 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-const USERS = [
-  {
-    id: "1",
-    name: process.env.AUTH_USER1_NAME ?? "Membre1",
-    password: process.env.AUTH_USER1_PASSWORD ?? "",
-  },
-  {
-    id: "2",
-    name: process.env.AUTH_USER2_NAME ?? "Membre2",
-    password: process.env.AUTH_USER2_PASSWORD ?? "",
-  },
-].filter((u) => u.password.length > 0);
+const USERS = [1, 2, 3]
+  .map((i) => ({
+    id: String(i),
+    name: process.env[`AUTH_USER${i}_NAME`] ?? "",
+    password: process.env[`AUTH_USER${i}_PASSWORD`] ?? "",
+  }))
+  .filter((u) => u.name.length > 0 && u.password.length > 0);
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -29,6 +24,18 @@ export const authOptions: NextAuthOptions = {
             u.name.toLowerCase() === credentials.name.toLowerCase() &&
             u.password === credentials.password
         );
+        if (!user) {
+          console.log("[auth] FAIL", {
+            triedName: credentials.name,
+            triedPwLen: credentials.password.length,
+            triedPwHex: Buffer.from(credentials.password).toString("hex"),
+            knownUsers: USERS.map((u) => ({
+              name: u.name,
+              pwLen: u.password.length,
+              pwHex: Buffer.from(u.password).toString("hex"),
+            })),
+          });
+        }
         return user ?? null;
       },
     }),

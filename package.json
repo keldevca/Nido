@@ -20,12 +20,14 @@
     "next-auth": "^4.24.14",
     "react": "^18",
     "react-dom": "^18",
-    "swr": "^2.2.5"
+    "swr": "^2.2.5",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/web-push": "^3.6.4",
     "autoprefixer": "^10.0.1",
     "postcss": "^8",
     "prisma": "5.22.0",

@@ -15,6 +15,8 @@ export type Course = {
   id: string;
   nom: string;
   prix: number | null;
+  quantite: number;
+  photo: string | null;
   categorie: string;
   taxable: boolean;
   coche: boolean;
@@ -29,10 +31,10 @@ export default function CoursesList() {
   const nonCoches = items.filter((i) => !i.coche);
   const coches = items.filter((i) => i.coche);
 
-  const sousTotal = nonCoches.reduce((sum, i) => sum + (i.prix ?? 0), 0);
+  const sousTotal = nonCoches.reduce((sum, i) => sum + (i.prix ?? 0) * (i.quantite ?? 1), 0);
   const sousTotalTaxable = nonCoches
     .filter((i) => i.taxable)
-    .reduce((sum, i) => sum + (i.prix ?? 0), 0);
+    .reduce((sum, i) => sum + (i.prix ?? 0) * (i.quantite ?? 1), 0);
   const { tps, tvq } = calculerTaxes(sousTotalTaxable);
   const total = sousTotal + tps + tvq;
 

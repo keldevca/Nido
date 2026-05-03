@@ -13,12 +13,14 @@
 
 ## ✨ Features
 
-- 🛒 **Shared grocery list** with categories, prices and **Quebec sales-tax computation** (GST 5 % + QST 9.975 %, applied only to taxable items per CRA / Revenu Québec rules).
+- 🛒 **Shared grocery list** with categories, prices, **quantities** (e.g. yogurt ×2), **per-item photos** and **Quebec sales-tax computation** (GST 5 % + QST 9.975 %, applied only to taxable items per CRA / Revenu Québec rules).
 - ✅ **Shared task list** with priority, location, assignee and due date.
+- 👁️ **Show/hide password** toggle on the login page.
 - 🔄 **Real-time sync via SWR polling** — both phones stay up to date every 5 s without WebSockets.
 - 🔔 **Activity feed & notifications** — bell icon with badge count + native browser notifications when the other person makes a change.
+- 📲 **Background Web Push** — receive a push notification on your phone even with the screen off / app closed (iOS 16.4+ requires the PWA installed).
 - 📱 **Installable PWA** — add to Home Screen on iOS / Android, runs full-screen, app-icon badge support (iOS 16.4+).
-- 🔒 **Authenticated** — credential-based auth via NextAuth, two configurable accounts.
+- 🔒 **Authenticated** — credential-based auth via NextAuth, **1 to 3 configurable accounts**.
 - 🐳 **One-command deploy** with Docker Compose. Ships behind a reverse proxy or at the root.
 - 🌚 Modern dark UI built with Tailwind & Framer Motion.
 
@@ -53,12 +55,38 @@ App is available at <http://localhost:3001>.
 | `POSTGRES_PASSWORD` | Postgres password (avoid `?` and `@` chars). |
 | `NEXTAUTH_URL` | Public URL of the app (no trailing slash). |
 | `NEXTAUTH_SECRET` | Random 32-char secret. Generate with `openssl rand -base64 32`. |
-| `AUTH_USER1_NAME` / `AUTH_USER1_PASSWORD` | First user credentials. |
-| `AUTH_USER2_NAME` / `AUTH_USER2_PASSWORD` | Second user credentials. |
-| `NEXT_PUBLIC_USER1_NAME` / `NEXT_PUBLIC_USER2_NAME` | Display names (must match the `AUTH_USER*_NAME` values). |
+| `AUTH_USER{1,2,3}_NAME` / `AUTH_USER{1,2,3}_PASSWORD` | Credentials for each member. **1 to 3 members supported** — leave a slot empty to disable it. |
+| `NEXT_PUBLIC_USER{1,2,3}_NAME` | Display names (must match the corresponding `AUTH_USER*_NAME`). |
 | `NEXT_PUBLIC_BASE_PATH` | Optional sub-path, e.g. `/Nido`. Leave empty for root. |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Web Push credentials (see *Background notifications* below). |
 
 See [`.env.example`](./.env.example) for the full template.
+
+## 📲 Background notifications (Web Push)
+
+Nido sends a real push notification to the other phone when you add/check off an item or task — even if the app is closed and the screen is off.
+
+1. **Generate a VAPID keypair** (one-time, on any machine with Node):
+
+   ```bash
+   npx web-push generate-vapid-keys --json
+   ```
+
+2. **Copy the values into `.env`**:
+
+   ```env
+   NEXT_PUBLIC_VAPID_PUBLIC_KEY=BJ...
+   VAPID_PRIVATE_KEY=xY...
+   VAPID_SUBJECT=mailto:you@example.com
+   ```
+
+   The public key is baked into the client at build time, so rebuild after changing it: `docker compose build --no-cache && docker compose up -d`.
+
+3. **Activate notifications on each phone**: open Nido in the browser, tap the bell-with-ring icon in the header, and accept the permission prompt. The icon turns orange when active.
+
+4. **iPhone caveat**: Web Push on iOS requires the PWA to be installed. Open Nido in **Safari**, tap **Share → Add to Home Screen**, then launch the app from the Home Screen and activate notifications from there. iOS 16.4 or later is required.
+
+Notifications are sent to every registered device except the one that made the change. Subscriptions that fail (404/410) are auto-pruned from the database.
 
 ## 🌐 Deploy behind nginx (sub-path)
 
@@ -108,8 +136,10 @@ npm run dev
 
 ## 🗺️ Roadmap
 
-- [ ] Background Web Push (currently foreground only)
-- [ ] Multi-household support (more than two users)
+- [x] Background Web Push notifications
+- [x] Per-item photos & quantities on grocery list
+- [x] Password visibility toggle
+- [ ] Multi-household support (more than three users)
 - [ ] CSV / receipt export
 - [ ] Recurring tasks
 - [ ] i18n (currently FR only)

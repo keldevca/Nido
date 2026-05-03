@@ -11,6 +11,8 @@ model CourseItem {
   id         String   @id @default(cuid())
   nom        String
   prix       Float?
+  quantite   Int      @default(1)
+  photo      String?
   categorie  String   @default("Autre")
   taxable    Boolean  @default(true)
   coche      Boolean  @default(false)
@@ -31,4 +33,15 @@ model Tache {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   updatedBy   String?
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userName  String?
+  createdAt DateTime @default(now())
+
+  @@index([userName])
 }
