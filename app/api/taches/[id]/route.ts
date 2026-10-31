@@ -3,10 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/api";
 import { sendPushToOthers } from "@/lib/push";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const user = await getCurrentUser();
   if (!user) return unauthorized();
 
@@ -33,10 +31,8 @@ export async function PATCH(
   return NextResponse.json(tache);
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const user = await getCurrentUser();
   if (!user) return unauthorized();
 
