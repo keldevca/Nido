@@ -7,6 +7,7 @@ import TacheItem from "./TacheItem";
 import AddTacheForm from "./AddTacheForm";
 import { useState } from "react";
 import { apiPath } from "@/lib/api";
+import { useCaptions } from "../LanguageProvider";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -32,6 +33,7 @@ const FILTRES = ["toutes", ...ASSIGNES] as const;
 type Filtre = (typeof FILTRES)[number];
 
 export default function TachesList() {
+  const { t, label } = useCaptions();
   const { data, mutate } = useSWR<Tache[]>(apiPath("/api/taches"), fetcher, {
     refreshInterval: 5000,
   });
@@ -80,7 +82,7 @@ export default function TachesList() {
                 : "bg-base-700 text-slate-400 hover:text-slate-200"
             }`}
           >
-            {f}
+            {label(f)}
           </button>
         ))}
       </div>
@@ -88,7 +90,7 @@ export default function TachesList() {
       {taches.length === 0 && (
         <div className="card p-12 flex flex-col items-center gap-3 text-slate-500">
           <ClipboardList size={40} strokeWidth={1.2} />
-          <p className="text-sm">Aucune tâche en cours</p>
+          <p className="text-sm">{t.tasks.empty}</p>
         </div>
       )}
 
@@ -111,13 +113,13 @@ export default function TachesList() {
         >
           <div className="px-4 py-2 border-b border-slate-700/50 flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
-              Terminées ({completees.length})
+              {t.tasks.done(completees.length)}
             </span>
             <button
               onClick={clearCompletees}
               className="text-xs text-red-400 hover:text-red-300 transition-colors"
             >
-              Tout supprimer
+              {t.common.clearAll}
             </button>
           </div>
           <div className="divide-y divide-slate-700/40">

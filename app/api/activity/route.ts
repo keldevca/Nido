@@ -4,7 +4,7 @@ import { getCurrentUser, unauthorized } from "@/lib/api";
 
 export type ActivityItem = {
   id: string;
-  type: "course" | "tache";
+  type: "course" | "purchase" | "tache";
   nom: string;
   updatedBy: string | null;
   updatedAt: string;
@@ -33,7 +33,7 @@ export async function GET() {
   const items: ActivityItem[] = [
     ...courses.map((c) => ({
       id: c.id,
-      type: "course" as const,
+      type: c.list === "purchases" ? ("purchase" as const) : ("course" as const),
       nom: c.nom,
       updatedBy: c.updatedBy,
       updatedAt: c.updatedAt.toISOString(),

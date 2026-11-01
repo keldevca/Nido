@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { prisma } from "./prisma";
+import { captions, type Captions, type Lang } from "./captions";
 
 let configured = false;
 
@@ -15,7 +16,7 @@ function configure() {
 }
 
 export type PushPayload = {
-  title: string;
+  title: (t: Captions) => string;
   body: string;
   url?: string;
   tag?: string;
@@ -28,6 +29,7 @@ type SubRow = {
   endpoint: string;
   p256dh: string;
   auth: string;
+  lang: string;
 };
 
 export async function sendPushToOthers(payload: PushPayload, exceptUser: string | null) {
@@ -39,10 +41,9 @@ export async function sendPushToOthers(payload: PushPayload, exceptUser: string 
       : undefined,
   });
 
-  const body = JSON.stringify(payload);
-
   await Promise.all(
     (subs as SubRow[]).map(async (sub) => {
+      const body = JSON.stringify({ ...payload, title: payload.title(captions[sub.lang as Lang] ?? captions.fr) });
       try {
         await webpush.sendNotification(
           {

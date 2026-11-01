@@ -1,0 +1,1 @@
+ALTER TABLE "PushSubscription" ADD COLUMN "lang" TEXT NOT NULL DEFAULT 'fr';

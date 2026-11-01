@@ -5,12 +5,14 @@ import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LIEUX, ASSIGNES } from "./TachesList";
 import { apiPath } from "@/lib/api";
+import { useCaptions } from "../LanguageProvider";
 
 type Props = {
   onAdded: () => void;
 };
 
 export default function AddTacheForm({ onAdded }: Props) {
+  const { t, label } = useCaptions();
   const [open, setOpen] = useState(false);
   const [nom, setNom] = useState("");
   const [description, setDescription] = useState("");
@@ -54,7 +56,7 @@ export default function AddTacheForm({ onAdded }: Props) {
         className="btn-primary w-full flex items-center justify-center gap-2"
       >
         <Plus size={18} />
-        Ajouter une tâche
+        {t.tasks.add}
       </button>
 
       <AnimatePresence>
@@ -69,7 +71,7 @@ export default function AddTacheForm({ onAdded }: Props) {
             <input
               autoFocus
               className="input"
-              placeholder="Nom de la tâche"
+              placeholder={t.tasks.name}
               value={nom}
               onChange={(e) => setNom(e.target.value)}
             />
@@ -77,7 +79,7 @@ export default function AddTacheForm({ onAdded }: Props) {
             <textarea
               className="input resize-none"
               rows={2}
-              placeholder="Description (optionnel)"
+              placeholder={t.tasks.description}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -88,10 +90,10 @@ export default function AddTacheForm({ onAdded }: Props) {
                 value={lieu}
                 onChange={(e) => setLieu(e.target.value)}
               >
-                <option value="">Lieu (optionnel)</option>
+                <option value="">{t.tasks.place}</option>
                 {LIEUX.map((l) => (
                   <option key={l} value={l}>
-                    {l}
+                    {label(l)}
                   </option>
                 ))}
               </select>
@@ -101,10 +103,10 @@ export default function AddTacheForm({ onAdded }: Props) {
                 value={assigneA}
                 onChange={(e) => setAssigneA(e.target.value)}
               >
-                <option value="">Assigné à (optionnel)</option>
+                <option value="">{t.tasks.assignee}</option>
                 {ASSIGNES.map((a) => (
                   <option key={a} value={a}>
-                    {a}
+                    {label(a)}
                   </option>
                 ))}
               </select>
@@ -112,7 +114,7 @@ export default function AddTacheForm({ onAdded }: Props) {
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <p className="text-xs text-slate-500 mb-1.5">Priorité</p>
+                <p className="text-xs text-slate-500 mb-1.5">{t.tasks.priority}</p>
                 <div className="flex gap-1">
                   {["haute", "normale", "basse"].map((p) => (
                     <button
@@ -129,14 +131,14 @@ export default function AddTacheForm({ onAdded }: Props) {
                           : "border-slate-700 text-slate-500"
                       }`}
                     >
-                      {p}
+                      {label(p)}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <p className="text-xs text-slate-500 mb-1.5">Date limite</p>
+                <p className="text-xs text-slate-500 mb-1.5">{t.tasks.dueDate}</p>
                 <input
                   type="date"
                   className="input"
@@ -152,14 +154,14 @@ export default function AddTacheForm({ onAdded }: Props) {
                 onClick={() => setOpen(false)}
                 className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 text-sm transition-colors"
               >
-                Annuler
+                {t.common.cancel}
               </button>
               <button
                 type="submit"
                 disabled={loading || !nom.trim()}
                 className="flex-1 btn-primary disabled:opacity-50"
               >
-                Ajouter
+                {t.common.add}
               </button>
             </div>
           </motion.form>

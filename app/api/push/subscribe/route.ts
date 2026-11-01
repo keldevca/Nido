@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/api";
+import { getLang } from "@/lib/lang";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -18,10 +19,11 @@ export async function POST(req: Request) {
     );
   }
 
+  const lang = await getLang();
   const sub = await prisma.pushSubscription.upsert({
     where: { endpoint },
-    create: { endpoint, p256dh, auth, userName: user },
-    update: { p256dh, auth, userName: user },
+    create: { endpoint, p256dh, auth, userName: user, lang },
+    update: { p256dh, auth, userName: user, lang },
   });
 
   return NextResponse.json({ ok: true, id: sub.id });

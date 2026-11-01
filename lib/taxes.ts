@@ -26,10 +26,6 @@ export const CATEGORIES: Categorie[] = [
   { nom: "Autre", taxable: true },
 ];
 
-export const TAXABLE_PAR_CATEGORIE = Object.fromEntries(
-  CATEGORIES.map((c) => [c.nom, c.taxable])
-);
-
 export function calculerTaxes(sousTotalTaxable: number) {
   const tps = sousTotalTaxable * TPS;
   const tvq = sousTotalTaxable * TVQ;

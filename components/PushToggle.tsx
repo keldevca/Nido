@@ -1,10 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { apiPath } from "@/lib/api";
+import { useCaptions } from "./LanguageProvider";
+import NotificationsBell from "./NotificationsBell";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+
+function Pill({ children }: { children?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-1.5 pl-1 pr-1.5 py-0.5 rounded-full bg-base-700/60 border border-slate-700/60">
+      <NotificationsBell />
+      {children}
+    </div>
+  );
+}
 
 function urlBase64ToUint8Array(base64: string) {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -25,6 +36,7 @@ type Status =
   | "error";
 
 export default function PushToggle() {
+  const { t } = useCaptions();
   const [status, setStatus] = useState<Status>("loading");
   const [busy, setBusy] = useState(false);
 
@@ -139,40 +151,36 @@ export default function PushToggle() {
     }
   }
 
-  if (status === "unsupported") return null;
+  if (status === "unsupported") return <Pill />;
 
   // États bloqués : un seul indicateur clair
   if (status === "needs-pwa") {
     return (
-      <button
-        className="btn-ghost p-2 text-amber-400"
-        title="Sur iPhone : Partager → Ajouter à l'écran d'accueil pour activer les notifications"
-        aria-label="Installer en PWA pour activer les notifications"
-        onClick={() =>
-          alert(
-            "Sur iPhone, les notifications en arrière-plan exigent que Nido soit installé via Safari : Partager → Ajouter à l'écran d'accueil. Ouvre ensuite l'app depuis l'écran d'accueil et reviens ici."
-          )
-        }
-      >
-        <AlertTriangle size={18} />
-      </button>
+      <Pill>
+        <button
+          className="flex p-1 text-amber-400"
+          title={t.push.needsPwaTitle}
+          aria-label={t.push.needsPwaLabel}
+          onClick={() => alert(t.push.needsPwaAlert)}
+        >
+          <AlertTriangle size={16} />
+        </button>
+      </Pill>
     );
   }
 
   if (status === "denied") {
     return (
-      <button
-        className="btn-ghost p-2 text-red-400"
-        title="Notifications bloquées dans les réglages du navigateur"
-        aria-label="Notifications bloquées"
-        onClick={() =>
-          alert(
-            "Les notifications sont bloquées. Va dans les réglages de ton navigateur (ou de l'app sur iPhone) pour les autoriser à nouveau."
-          )
-        }
-      >
-        <AlertTriangle size={18} />
-      </button>
+      <Pill>
+        <button
+          className="flex p-1 text-red-400"
+          title={t.push.deniedTitle}
+          aria-label={t.push.deniedLabel}
+          onClick={() => alert(t.push.deniedAlert)}
+        >
+          <AlertTriangle size={16} />
+        </button>
+      </Pill>
     );
   }
 
@@ -181,38 +189,30 @@ export default function PushToggle() {
   const loading = status === "loading" || busy;
 
   return (
-    <button
-      onClick={isOn ? disable : enable}
-      disabled={loading}
-      role="switch"
-      aria-checked={isOn}
-      aria-label={isOn ? "Désactiver les notifications push" : "Activer les notifications push"}
-      title={
-        isOn
-          ? "Notifications activées — toucher pour désactiver"
-          : "Activer les notifications push"
-      }
-      className={`flex items-center gap-2 px-2 py-1 rounded-full transition-colors disabled:opacity-50 ${
-        isOn ? "bg-accent/15" : "bg-slate-700/40 hover:bg-slate-700/70"
-      }`}
-    >
-      <Bell
-        size={14}
-        className={isOn ? "text-accent" : "text-slate-400"}
-      />
-      <span
-        className={`relative inline-block w-8 h-4 rounded-full transition-colors ${
-          isOn ? "bg-accent" : "bg-slate-600"
-        }`}
+    <Pill>
+      <button
+        onClick={isOn ? disable : enable}
+        disabled={loading}
+        role="switch"
+        aria-checked={isOn}
+        aria-label={isOn ? t.push.disable : t.push.enable}
+        title={isOn ? t.push.onTitle : t.push.enable}
+        className="flex disabled:opacity-50"
       >
         <span
-          className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform flex items-center justify-center ${
-            isOn ? "translate-x-4" : "translate-x-0"
+          className={`relative inline-block w-8 h-4 rounded-full transition-colors ${
+            isOn ? "bg-accent" : "bg-slate-600"
           }`}
         >
-          {loading && <Loader2 size={8} className="animate-spin text-slate-500" />}
+          <span
+            className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform flex items-center justify-center ${
+              isOn ? "translate-x-4" : "translate-x-0"
+            }`}
+          >
+            {loading && <Loader2 size={8} className="animate-spin text-slate-500" />}
+          </span>
         </span>
-      </span>
-    </button>
+      </button>
+    </Pill>
   );
 }

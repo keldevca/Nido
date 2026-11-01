@@ -3,12 +3,14 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingBag, ShoppingCart } from "lucide-react";
 import CourseItem from "./CourseItem";
 import AddCourseForm from "./AddCourseForm";
 import CoursesTotalBar from "./CoursesTotalBar";
-import { CATEGORIES, calculerTaxes } from "@/lib/taxes";
+import { calculerTaxes } from "@/lib/taxes";
+import { LISTS, type ListKind } from "@/lib/lists";
 import { apiPath } from "@/lib/api";
+import { useCaptions } from "../LanguageProvider";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -20,13 +22,14 @@ export type Course = {
   photo: string | null;
   categorie: string;
   store: string | null;
+  list: ListKind;
   taxable: boolean;
   coche: boolean;
 };
 
 type GroupBy = "store" | "category";
 
-const NO_STORE = "Sans magasin";
+const NO_STORE = "__none__";
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -43,8 +46,12 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-export default function CoursesList() {
-  const { data, mutate } = useSWR<Course[]>(apiPath("/api/courses"), fetcher, {
+export default function CoursesList({ list }: { list: ListKind }) {
+  const { t, label } = useCaptions();
+  const categories = LISTS[list].categories;
+  const mixedTax = categories.some((c) => !c.taxable);
+  const EmptyIcon = list === "purchases" ? ShoppingBag : ShoppingCart;
+  const { data, mutate } = useSWR<Course[]>(apiPath(`/api/courses?list=${list}`), fetcher, {
     refreshInterval: 5000,
   });
 
@@ -77,7 +84,6 @@ export default function CoursesList() {
 
   const toggle = (item: Course) => update(item.id, { coche: !item.coche });
   const updatePrix = (id: string, prix: number | null) => update(id, { prix });
-  const toggleTaxable = (item: Course) => update(item.id, { taxable: !item.taxable });
 
   async function remove(id: string) {
     await fetch(apiPath(`/api/courses/${id}`), { method: "DELETE" });
@@ -89,7 +95,7 @@ export default function CoursesList() {
     mutate();
   }
 
-  const groupKeys = groupBy === "store" ? [...usedStores, NO_STORE] : CATEGORIES.map((c) => c.nom);
+  const groupKeys = groupBy === "store" ? [...usedStores, NO_STORE] : categories.map((c) => c.nom);
   const groupOf = (i: Course) => (groupBy === "store" ? i.store ?? NO_STORE : i.categorie);
   const grouped = groupKeys.reduce<Record<string, Course[]>>((acc, key) => {
     const groupItems = nonCoches.filter((i) => groupOf(i) === key);
@@ -99,15 +105,15 @@ export default function CoursesList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <AddCourseForm onAdded={() => mutate()} />
+      <AddCourseForm list={list} onAdded={() => mutate()} />
 
       {allItems.length > 0 && (
         <div className="flex gap-2">
           <Chip active={groupBy === "store"} onClick={() => setGroupBy("store")}>
-            Par magasin
+            {t.shopping.byStore}
           </Chip>
           <Chip active={groupBy === "category"} onClick={() => setGroupBy("category")}>
-            Par catégorie
+            {t.shopping.byCategory}
           </Chip>
         </div>
       )}
@@ -116,7 +122,7 @@ export default function CoursesList() {
         <div className="flex gap-2 overflow-x-auto pb-1">
           {[null, ...usedStores].map((store) => (
             <Chip key={store ?? "all"} active={activeStore === store} onClick={() => setStoreFilter(store)}>
-              {store ?? "Tous"}
+              {store ?? t.shopping.allStores}
             </Chip>
           ))}
         </div>
@@ -124,14 +130,14 @@ export default function CoursesList() {
 
       {items.length === 0 && (
         <div className="card p-12 flex flex-col items-center gap-3 text-slate-500">
-          <ShoppingCart size={40} strokeWidth={1.2} />
-          <p className="text-sm">Ta liste est vide</p>
+          <EmptyIcon size={40} strokeWidth={1.2} />
+          <p className="text-sm">{t.lists[list].empty}</p>
         </div>
       )}
 
       <AnimatePresence>
         {Object.entries(grouped).map(([cat, catItems]) => {
-          const catDef = groupBy === "category" ? CATEGORIES.find((c) => c.nom === cat) : undefined;
+          const catDef = groupBy === "category" && mixedTax ? categories.find((c) => c.nom === cat) : undefined;
           return (
             <motion.div
               key={cat}
@@ -142,7 +148,7 @@ export default function CoursesList() {
             >
               <div className="px-4 py-2 border-b border-slate-700/50 flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest flex-1">
-                  {cat}
+                  {cat === NO_STORE ? t.shopping.noStore : label(cat)}
                 </span>
                 {catDef && (
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -150,7 +156,7 @@ export default function CoursesList() {
                       ? "bg-amber-500/15 text-amber-400"
                       : "bg-emerald-500/15 text-emerald-400"
                   }`}>
-                    {catDef.taxable ? "taxé" : "non taxé"}
+                    {catDef.taxable ? t.shopping.taxed : t.shopping.notTaxed}
                   </span>
                 )}
               </div>
@@ -162,8 +168,8 @@ export default function CoursesList() {
                     onToggle={toggle}
                     onDelete={remove}
                     onUpdatePrix={updatePrix}
-                    onToggleTaxable={toggleTaxable}
                     onEdit={update}
+                    showStore={groupBy !== "store"}
                   />
                 ))}
               </div>
@@ -180,13 +186,13 @@ export default function CoursesList() {
         >
           <div className="px-4 py-2 border-b border-slate-700/50 flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
-              Dans le panier ({coches.length})
+              {t.shopping.inCart(coches.length)}
             </span>
             <button
               onClick={clearCoches}
               className="text-xs text-red-400 hover:text-red-300 transition-colors"
             >
-              Tout supprimer
+              {t.common.clearAll}
             </button>
           </div>
           <div className="divide-y divide-slate-700/40">
@@ -197,8 +203,8 @@ export default function CoursesList() {
                 onToggle={toggle}
                 onDelete={remove}
                 onUpdatePrix={updatePrix}
-                onToggleTaxable={toggleTaxable}
                 onEdit={update}
+                showStore
               />
             ))}
           </div>

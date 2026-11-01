@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/api";
 import { sendPushToOthers } from "@/lib/push";
-import { rememberStore } from "@/lib/stores";
+import { LISTS, parseList } from "@/lib/lists";
+import { resolveStore } from "@/lib/stores";
 
 export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -10,25 +11,23 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   if (!user) return unauthorized();
 
   const body = await req.json();
+  if ("store" in body) {
+    const current = await prisma.courseItem.findUniqueOrThrow({ where: { id: params.id }, select: { list: true } });
+    body.store = await resolveStore(body.store, parseList(current.list));
+  }
   const item = await prisma.courseItem.update({
     where: { id: params.id },
-    data: {
-      ...body,
-      ...("store" in body && { store: body.store?.trim() || null }),
-      updatedBy: user,
-    },
+    data: { ...body, updatedBy: user },
   });
 
-  if ("store" in body) await rememberStore(item.store);
-
   if (typeof body.coche === "boolean") {
-    const verbe = body.coche ? "a coché" : "a décoché";
+    const list = parseList(item.list);
     sendPushToOthers(
       {
-        title: `${user} ${verbe} un article`,
+        title: (t) => (body.coche ? t.notify.itemChecked(user) : t.notify.itemUnchecked(user)),
         body: item.nom,
-        url: "/courses",
-        tag: "nido-courses",
+        url: LISTS[list].path,
+        tag: `nido-${list}`,
       },
       user
     ).catch(() => {});

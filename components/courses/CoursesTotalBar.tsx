@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useCaptions } from "../LanguageProvider";
 
 type Props = {
   sousTotal: number;
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export default function CoursesTotalBar({ sousTotal, sousTotalTaxable, tps, tvq, total }: Props) {
+  const { t } = useCaptions();
   const sousTotalNonTaxable = sousTotal - sousTotalTaxable;
 
   return (
@@ -23,7 +25,7 @@ export default function CoursesTotalBar({ sousTotal, sousTotalTaxable, tps, tvq,
         {sousTotalNonTaxable > 0 && (
           <div className="flex justify-between text-sm text-slate-400">
             <span className="flex items-center gap-2">
-              Articles non taxés
+              {t.totals.notTaxedItems}
               <span className="text-xs bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded">0%</span>
             </span>
             <span className="font-mono">{sousTotalNonTaxable.toFixed(2)} $</span>
@@ -32,8 +34,8 @@ export default function CoursesTotalBar({ sousTotal, sousTotalTaxable, tps, tvq,
         {sousTotalTaxable > 0 && (
           <div className="flex justify-between text-sm text-slate-400">
             <span className="flex items-center gap-2">
-              Articles taxés
-              <span className="text-xs bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded">TPS+TVQ</span>
+              {t.totals.taxedItems}
+              <span className="text-xs bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded">{t.totals.taxBadge}</span>
             </span>
             <span className="font-mono">{sousTotalTaxable.toFixed(2)} $</span>
           </div>
@@ -41,17 +43,17 @@ export default function CoursesTotalBar({ sousTotal, sousTotalTaxable, tps, tvq,
         {(tps > 0 || tvq > 0) && (
           <>
             <div className="flex justify-between text-xs text-slate-500 pl-2">
-              <span>TPS (5%)</span>
+              <span>{t.totals.gst}</span>
               <span className="font-mono">+ {tps.toFixed(2)} $</span>
             </div>
             <div className="flex justify-between text-xs text-slate-500 pl-2">
-              <span>TVQ (9,975%)</span>
+              <span>{t.totals.qst}</span>
               <span className="font-mono">+ {tvq.toFixed(2)} $</span>
             </div>
           </>
         )}
         <div className="border-t border-slate-700 pt-2 mt-2 flex justify-between text-base font-semibold text-white">
-          <span>Total estimé</span>
+          <span>{t.totals.total}</span>
           <span className="font-mono text-accent">{total.toFixed(2)} $</span>
         </div>
       </div>

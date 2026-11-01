@@ -15,6 +15,7 @@ model CourseItem {
   photo      String?
   categorie  String   @default("Autre")
   store      String?
+  list       String   @default("groceries")
   taxable    Boolean  @default(true)
   coche      Boolean  @default(false)
   createdAt  DateTime @default(now())
@@ -42,6 +43,7 @@ model PushSubscription {
   p256dh    String
   auth      String
   userName  String?
+  lang      String   @default("fr")
   createdAt DateTime @default(now())
 
   @@index([userName])
@@ -49,6 +51,9 @@ model PushSubscription {
 
 model Store {
   id        String   @id @default(cuid())
-  name      String   @unique
+  name      String
+  list      String   @default("groceries")
   createdAt DateTime @default(now())
+
+  @@unique([name, list])
 }

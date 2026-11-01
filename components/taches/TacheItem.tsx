@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Check, Trash2, MapPin, Calendar, User } from "lucide-react";
 import type { Tache } from "./TachesList";
+import { useCaptions } from "../LanguageProvider";
 
 type Props = {
   tache: Tache;
@@ -22,8 +23,8 @@ const PRIORITE_DOT: Record<string, string> = {
   basse: "bg-emerald-400",
 };
 
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("fr-CA", {
+function formatDate(d: string, locale: string) {
+  return new Date(d).toLocaleDateString(locale, {
     day: "numeric",
     month: "short",
   });
@@ -34,6 +35,7 @@ function isOverdue(d: string) {
 }
 
 export default function TacheItem({ tache, onToggle, onDelete }: Props) {
+  const { t, label } = useCaptions();
   return (
     <motion.div
       layout
@@ -44,7 +46,7 @@ export default function TacheItem({ tache, onToggle, onDelete }: Props) {
     >
       <button
         onClick={() => onToggle(tache)}
-        aria-label={tache.completee ? "Décocher" : "Cocher"}
+        aria-label={tache.completee ? t.common.uncheck : t.common.check}
         className={`flex-shrink-0 mt-0.5 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-200 active:scale-90 ${
           tache.completee
             ? "bg-emerald-500 border-emerald-500"
@@ -69,11 +71,11 @@ export default function TacheItem({ tache, onToggle, onDelete }: Props) {
               className={`tag border ${PRIORITE_STYLES[tache.priorite]}`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${PRIORITE_DOT[tache.priorite]}`} />
-              {tache.priorite}
+              {label(tache.priorite)}
             </span>
             <button
               onClick={() => onDelete(tache.id)}
-              aria-label="Supprimer"
+              aria-label={t.common.delete}
               className="text-slate-500 hover:text-red-400 active:text-red-500 p-2 -m-1 rounded-lg active:bg-red-500/10 transition-colors"
             >
               <Trash2 size={16} />
@@ -88,12 +90,12 @@ export default function TacheItem({ tache, onToggle, onDelete }: Props) {
         <div className="flex flex-wrap gap-2 mt-2">
           {tache.lieu && (
             <span className="tag bg-slate-700/60 text-slate-400">
-              <MapPin size={10} /> {tache.lieu}
+              <MapPin size={10} /> {label(tache.lieu)}
             </span>
           )}
           {tache.assigneA && (
             <span className="tag bg-indigo-500/15 text-indigo-400">
-              <User size={10} /> {tache.assigneA}
+              <User size={10} /> {label(tache.assigneA)}
             </span>
           )}
           {tache.dateLimite && (
@@ -104,7 +106,7 @@ export default function TacheItem({ tache, onToggle, onDelete }: Props) {
                   : "bg-slate-700/60 text-slate-400"
               }`}
             >
-              <Calendar size={10} /> {formatDate(tache.dateLimite)}
+              <Calendar size={10} /> {formatDate(tache.dateLimite, t.locale)}
             </span>
           )}
         </div>

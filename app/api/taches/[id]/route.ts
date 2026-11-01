@@ -16,10 +16,9 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   });
 
   if (typeof body.completee === "boolean") {
-    const verbe = body.completee ? "a complété" : "a rouvert";
     sendPushToOthers(
       {
-        title: `${user} ${verbe} une tâche`,
+        title: (t) => (body.completee ? t.notify.taskCompleted(user) : t.notify.taskReopened(user)),
         body: tache.nom,
         url: "/taches",
         tag: "nido-taches",

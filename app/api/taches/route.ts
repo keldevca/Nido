@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 
   sendPushToOthers(
     {
-      title: `${user} a ajouté une tâche`,
+      title: (t) => t.notify.taskAdded(user),
       body: tache.nom,
       url: "/taches",
       tag: "nido-taches",

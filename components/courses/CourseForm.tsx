@@ -1,19 +1,17 @@
 "use client";
 
 import { useRef, useState } from "react";
-import useSWR from "swr";
+import { mutate } from "swr";
 import { Camera, X } from "lucide-react";
-import { CATEGORIES, TAXABLE_PAR_CATEGORIE } from "@/lib/taxes";
-import { apiPath } from "@/lib/api";
+import { LISTS, isTaxable, type ListKind } from "@/lib/lists";
 import type { Course } from "./CoursesList";
+import StorePicker, { storesKey } from "./StorePicker";
+import { useCaptions } from "../LanguageProvider";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
-
-const NEW_STORE = "__new__";
-
-export type CourseFormValues = Omit<Course, "id" | "coche">;
+export type CourseFormValues = Omit<Course, "id" | "coche" | "list">;
 
 type Props = {
+  list: ListKind;
   initial?: Course;
   submitLabel: string;
   onSubmit: (values: CourseFormValues) => Promise<void>;
@@ -44,28 +42,22 @@ async function fileToCompressedDataUrl(file: File, maxSide = 600, quality = 0.7)
   return canvas.toDataURL("image/jpeg", quality);
 }
 
-export default function CourseForm({ initial, submitLabel, onSubmit, onCancel }: Props) {
-  const { data: stores = [], mutate: mutateStores } = useSWR<string[]>(apiPath("/api/stores"), fetcher);
+export default function CourseForm({ list, initial, submitLabel, onSubmit, onCancel }: Props) {
+  const { t, label } = useCaptions();
+  const categories = LISTS[list].categories;
   const [nom, setNom] = useState(initial?.nom ?? "");
   const [prix, setPrix] = useState(initial?.prix?.toString() ?? "");
   const [quantite, setQuantite] = useState(String(initial?.quantite ?? 1));
-  const [categorie, setCategorie] = useState(initial?.categorie ?? CATEGORIES[0]?.nom ?? "Autre");
-  const [taxable, setTaxable] = useState(initial?.taxable ?? TAXABLE_PAR_CATEGORIE[categorie] ?? true);
+  const [categorie, setCategorie] = useState(initial?.categorie ?? categories[0]?.nom ?? "Autre");
+  const [taxable, setTaxable] = useState(initial?.taxable ?? isTaxable(list, categorie));
   const [store, setStore] = useState(initial?.store ?? "");
-  const [newStore, setNewStore] = useState("");
   const [photo, setPhoto] = useState<string | null>(initial?.photo ?? null);
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function changeCategorie(value: string) {
     setCategorie(value);
-    setTaxable(TAXABLE_PAR_CATEGORIE[value] ?? true);
-  }
-
-  function selectedStore() {
-    if (store !== NEW_STORE) return store;
-    const name = newStore.trim();
-    return stores.find((s) => s.toLowerCase() === name.toLowerCase()) ?? name;
+    setTaxable(isTaxable(list, value));
   }
 
   async function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -75,7 +67,7 @@ export default function CourseForm({ initial, submitLabel, onSubmit, onCancel }:
       const compressed = await fileToCompressedDataUrl(f);
       setPhoto(compressed);
     } catch {
-      alert("Impossible de lire cette photo.");
+      alert(t.form.photoError);
     }
   }
 
@@ -89,11 +81,11 @@ export default function CourseForm({ initial, submitLabel, onSubmit, onCancel }:
       quantite: parseInt(quantite, 10) || 1,
       photo,
       categorie,
-      store: selectedStore() || null,
+      store: store.trim() || null,
       taxable,
     });
     setLoading(false);
-    mutateStores();
+    mutate(storesKey(list));
   }
 
   return (
@@ -101,7 +93,7 @@ export default function CourseForm({ initial, submitLabel, onSubmit, onCancel }:
       <input
         autoFocus
         className="input"
-        placeholder="Nom de l'article"
+        placeholder={t.form.name}
         value={nom}
         onChange={(e) => setNom(e.target.value)}
       />
@@ -112,7 +104,7 @@ export default function CourseForm({ initial, submitLabel, onSubmit, onCancel }:
           step="0.01"
           min="0"
           className="input w-28"
-          placeholder="Prix"
+          placeholder={t.form.price}
           value={prix}
           onChange={(e) => setPrix(e.target.value)}
         />
@@ -121,46 +113,25 @@ export default function CourseForm({ initial, submitLabel, onSubmit, onCancel }:
           min="1"
           step="1"
           className="input w-20 text-center"
-          placeholder="Qté"
+          placeholder={t.form.qty}
           value={quantite}
           onChange={(e) => setQuantite(e.target.value)}
-          title="Quantité"
+          title={t.form.quantity}
         />
         <select
           className="input flex-1"
           value={categorie}
           onChange={(e) => changeCategorie(e.target.value)}
         >
-          {CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <option key={c.nom} value={c.nom}>
-              {c.nom}
+              {label(c.nom)}
             </option>
           ))}
         </select>
       </div>
 
-      <select
-        className="input"
-        value={store}
-        onChange={(e) => setStore(e.target.value)}
-      >
-        <option value="">Aucun magasin</option>
-        {stores.map((s) => (
-          <option key={s} value={s}>
-            {s}
-          </option>
-        ))}
-        <option value={NEW_STORE}>+ Autre magasin…</option>
-      </select>
-      {store === NEW_STORE && (
-        <input
-          autoFocus
-          className="input"
-          placeholder="Nom du magasin"
-          value={newStore}
-          onChange={(e) => setNewStore(e.target.value)}
-        />
-      )}
+      <StorePicker list={list} value={store} onChange={setStore} />
 
       <div className="flex items-center gap-3">
         <input
@@ -174,7 +145,7 @@ export default function CourseForm({ initial, submitLabel, onSubmit, onCancel }:
           <div className="relative">
             <img
               src={photo}
-              alt="Aperçu"
+              alt={t.form.preview}
               className="w-16 h-16 rounded-xl object-cover border border-slate-700"
             />
             <button
@@ -184,7 +155,7 @@ export default function CourseForm({ initial, submitLabel, onSubmit, onCancel }:
                 if (fileRef.current) fileRef.current.value = "";
               }}
               className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
-              aria-label="Retirer la photo"
+              aria-label={t.form.removePhoto}
             >
               <X size={14} />
             </button>
@@ -196,18 +167,24 @@ export default function CourseForm({ initial, submitLabel, onSubmit, onCancel }:
             className="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-slate-600 text-slate-400 hover:text-accent hover:border-accent text-sm transition-colors"
           >
             <Camera size={16} />
-            Ajouter une photo
+            {t.form.addPhoto}
           </button>
         )}
       </div>
 
-      <div className={`text-xs px-3 py-2 rounded-xl font-medium ${
-        taxable
-          ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-          : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-      }`}>
-        {taxable ? "Cet article sera taxé (TPS + TVQ)" : "Cet article est non taxé (denrée de base)"}
-      </div>
+      <button
+        type="button"
+        onClick={() => setTaxable((v) => !v)}
+        aria-pressed={taxable}
+        className={`flex items-center justify-between gap-3 text-left text-xs px-3 py-2 rounded-xl font-medium transition-colors ${
+          taxable
+            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+            : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+        }`}
+      >
+        <span>{taxable ? t.form.willBeTaxed : t.form.notTaxed}</span>
+        <span className="flex-shrink-0 underline underline-offset-2 opacity-80">{t.form.changeTax}</span>
+      </button>
 
       <div className="flex gap-2">
         <button
@@ -215,7 +192,7 @@ export default function CourseForm({ initial, submitLabel, onSubmit, onCancel }:
           onClick={onCancel}
           className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 text-sm transition-colors"
         >
-          Annuler
+          {t.common.cancel}
         </button>
         <button
           type="submit"
