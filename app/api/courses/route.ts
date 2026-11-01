@@ -25,6 +25,7 @@ export async function POST(req: Request) {
       quantite: body.quantite && body.quantite > 0 ? body.quantite : 1,
       photo: body.photo ?? null,
       categorie: body.categorie ?? "Autre",
+      store: body.store?.trim() || null,
       taxable: body.taxable ?? true,
       updatedBy: user,
     },

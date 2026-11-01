@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Trash2, Pencil, X, ImageIcon } from "lucide-react";
+import { Check, Trash2, Pencil, X, ImageIcon, Store } from "lucide-react";
 import type { Course } from "./CoursesList";
 
 type Props = {
@@ -70,6 +70,12 @@ export default function CourseItem({ item, onToggle, onDelete, onUpdatePrix, onT
           {item.quantite > 1 && (
             <span className="ml-2 text-xs font-bold text-accent bg-accent/15 rounded-md px-1.5 py-0.5 align-middle">
               ×{item.quantite}
+            </span>
+          )}
+          {item.store && (
+            <span className="tag ml-2 bg-slate-700/60 text-slate-300 align-middle">
+              <Store size={11} />
+              {item.store}
             </span>
           )}
         </span>

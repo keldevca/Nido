@@ -14,6 +14,7 @@ model CourseItem {
   quantite   Int      @default(1)
   photo      String?
   categorie  String   @default("Autre")
+  store      String?
   taxable    Boolean  @default(true)
   coche      Boolean  @default(false)
   createdAt  DateTime @default(now())

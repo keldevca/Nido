@@ -8,6 +8,7 @@ import { apiPath } from "@/lib/api";
 
 type Props = {
   onAdded: () => void;
+  stores: string[];
 };
 
 // Compresse l'image côté client en base64 (max 600px côté + JPEG 70%)
@@ -35,13 +36,14 @@ async function fileToCompressedDataUrl(file: File, maxSide = 600, quality = 0.7)
   return canvas.toDataURL("image/jpeg", quality);
 }
 
-export default function AddCourseForm({ onAdded }: Props) {
+export default function AddCourseForm({ onAdded, stores }: Props) {
   const DEFAULT_CAT = CATEGORIES[0]?.nom ?? "Autre";
   const [open, setOpen] = useState(false);
   const [nom, setNom] = useState("");
   const [prix, setPrix] = useState("");
   const [quantite, setQuantite] = useState("1");
   const [categorie, setCategorie] = useState(DEFAULT_CAT);
+  const [store, setStore] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -64,6 +66,7 @@ export default function AddCourseForm({ onAdded }: Props) {
     setPrix("");
     setQuantite("1");
     setCategorie(DEFAULT_CAT);
+    setStore("");
     setPhoto(null);
     if (fileRef.current) fileRef.current.value = "";
   }
@@ -81,6 +84,7 @@ export default function AddCourseForm({ onAdded }: Props) {
         quantite: parseInt(quantite, 10) || 1,
         photo,
         categorie,
+        store,
         taxable,
       }),
     });
@@ -149,6 +153,19 @@ export default function AddCourseForm({ onAdded }: Props) {
                 ))}
               </select>
             </div>
+
+            <input
+              className="input"
+              placeholder="Magasin (optionnel)"
+              list="store-suggestions"
+              value={store}
+              onChange={(e) => setStore(e.target.value)}
+            />
+            <datalist id="store-suggestions">
+              {stores.map((m) => (
+                <option key={m} value={m} />
+              ))}
+            </datalist>
 
             {/* Photo */}
             <div className="flex items-center gap-3">

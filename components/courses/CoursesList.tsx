@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
@@ -8,6 +9,7 @@ import AddCourseForm from "./AddCourseForm";
 import CoursesTotalBar from "./CoursesTotalBar";
 import { CATEGORIES, calculerTaxes } from "@/lib/taxes";
 import { apiPath } from "@/lib/api";
+import { listStores } from "@/lib/stores";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -18,6 +20,7 @@ export type Course = {
   quantite: number;
   photo: string | null;
   categorie: string;
+  store: string | null;
   taxable: boolean;
   coche: boolean;
 };
@@ -27,7 +30,12 @@ export default function CoursesList() {
     refreshInterval: 5000,
   });
 
-  const items = data ?? [];
+  const [storeFilter, setStoreFilter] = useState<string | null>(null);
+
+  const allItems = data ?? [];
+  const usedStores = Array.from(new Set(allItems.map((i) => i.store).filter((s): s is string => !!s)));
+  const activeStore = storeFilter && usedStores.includes(storeFilter) ? storeFilter : null;
+  const items = activeStore ? allItems.filter((i) => i.store === activeStore) : allItems;
   const nonCoches = items.filter((i) => !i.coche);
   const coches = items.filter((i) => i.coche);
 
@@ -83,7 +91,25 @@ export default function CoursesList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <AddCourseForm onAdded={() => mutate()} />
+      <AddCourseForm onAdded={() => mutate()} stores={listStores(usedStores)} />
+
+      {usedStores.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {[null, ...usedStores].map((store) => (
+            <button
+              key={store ?? "all"}
+              onClick={() => setStoreFilter(store)}
+              className={`flex-shrink-0 text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                activeStore === store
+                  ? "bg-accent border-accent text-white"
+                  : "border-slate-700 text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {store ?? "Tous"}
+            </button>
+          ))}
+        </div>
+      )}
 
       {items.length === 0 && (
         <div className="card p-12 flex flex-col items-center gap-3 text-slate-500">
