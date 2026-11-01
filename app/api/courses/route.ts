@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/api";
 import { sendPushToOthers } from "@/lib/push";
+import { rememberStore } from "@/lib/stores";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -30,6 +31,8 @@ export async function POST(req: Request) {
       updatedBy: user,
     },
   });
+
+  await rememberStore(item.store);
 
   sendPushToOthers(
     {

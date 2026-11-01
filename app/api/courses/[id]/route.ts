@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, unauthorized } from "@/lib/api";
 import { sendPushToOthers } from "@/lib/push";
+import { rememberStore } from "@/lib/stores";
 
 export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -11,8 +12,14 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
   const body = await req.json();
   const item = await prisma.courseItem.update({
     where: { id: params.id },
-    data: { ...body, updatedBy: user },
+    data: {
+      ...body,
+      ...("store" in body && { store: body.store?.trim() || null }),
+      updatedBy: user,
+    },
   });
+
+  if ("store" in body) await rememberStore(item.store);
 
   if (typeof body.coche === "boolean") {
     const verbe = body.coche ? "a coché" : "a décoché";

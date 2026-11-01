@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Trash2, Pencil, X, ImageIcon, Store } from "lucide-react";
 import type { Course } from "./CoursesList";
+import CourseForm, { type CourseFormValues } from "./CourseForm";
 
 type Props = {
   item: Course;
@@ -11,9 +12,11 @@ type Props = {
   onDelete: (id: string) => void;
   onUpdatePrix: (id: string, prix: number | null) => void;
   onToggleTaxable: (item: Course) => void;
+  onEdit: (id: string, values: CourseFormValues) => Promise<void>;
 };
 
-export default function CourseItem({ item, onToggle, onDelete, onUpdatePrix, onToggleTaxable }: Props) {
+export default function CourseItem({ item, onToggle, onDelete, onUpdatePrix, onToggleTaxable, onEdit }: Props) {
+  const [editing, setEditing] = useState(false);
   const [editingPrix, setEditingPrix] = useState(false);
   const [prixInput, setPrixInput] = useState(item.prix?.toString() ?? "");
   const [photoOpen, setPhotoOpen] = useState(false);
@@ -22,6 +25,24 @@ export default function CourseItem({ item, onToggle, onDelete, onUpdatePrix, onT
     const val = parseFloat(prixInput);
     onUpdatePrix(item.id, isNaN(val) ? null : val);
     setEditingPrix(false);
+  }
+
+  async function saveEdit(values: CourseFormValues) {
+    await onEdit(item.id, values);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="p-3">
+        <CourseForm
+          initial={item}
+          submitLabel="Enregistrer"
+          onSubmit={saveEdit}
+          onCancel={() => setEditing(false)}
+        />
+      </div>
+    );
   }
 
   return (
@@ -61,26 +82,38 @@ export default function CourseItem({ item, onToggle, onDelete, onUpdatePrix, onT
           </button>
         ) : null}
 
-        <span
-          className={`flex-1 text-base font-medium leading-tight ${
-            item.coche ? "line-through text-slate-500" : "text-slate-100"
-          }`}
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          aria-label={`Modifier ${item.nom}`}
+          className="flex-1 min-w-0 text-left"
         >
-          {item.nom}
-          {item.quantite > 1 && (
-            <span className="ml-2 text-xs font-bold text-accent bg-accent/15 rounded-md px-1.5 py-0.5 align-middle">
-              ×{item.quantite}
+          <span
+            title={item.nom}
+            className={`block text-base font-medium leading-tight line-clamp-2 break-words ${
+              item.coche ? "line-through text-slate-500" : "text-slate-100"
+            }`}
+          >
+            {item.nom}
+          </span>
+          {(item.quantite > 1 || item.store) && (
+            <span className="flex flex-wrap gap-1.5 mt-1">
+              {item.quantite > 1 && (
+                <span className="text-xs font-bold text-accent bg-accent/15 rounded-md px-1.5 py-0.5">
+                  ×{item.quantite}
+                </span>
+              )}
+              {item.store && (
+                <span className="tag bg-slate-700/60 text-slate-300 max-w-full">
+                  <Store size={11} className="flex-shrink-0" />
+                  <span className="truncate">{item.store}</span>
+                </span>
+              )}
             </span>
           )}
-          {item.store && (
-            <span className="tag ml-2 bg-slate-700/60 text-slate-300 align-middle">
-              <Store size={11} />
-              {item.store}
-            </span>
-          )}
-        </span>
+        </button>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
             onClick={() => onToggleTaxable(item)}
             title={item.taxable ? "Taxé — toucher pour retirer" : "Non taxé — toucher pour taxer"}
@@ -110,7 +143,10 @@ export default function CourseItem({ item, onToggle, onDelete, onUpdatePrix, onT
             />
           ) : (
             <button
-              onClick={() => setEditingPrix(true)}
+              onClick={() => {
+                setPrixInput(item.prix?.toString() ?? "");
+                setEditingPrix(true);
+              }}
               aria-label="Modifier le prix"
               className="flex items-center gap-1 text-sm text-slate-300 hover:text-slate-100 px-2 py-1 rounded-lg active:bg-slate-700/40 transition-colors"
             >
@@ -145,7 +181,7 @@ export default function CourseItem({ item, onToggle, onDelete, onUpdatePrix, onT
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setPhotoOpen(false)}
-            className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/85 flex flex-col items-center justify-center gap-4 p-4"
           >
             <button
               onClick={() => setPhotoOpen(false)}
@@ -157,8 +193,11 @@ export default function CourseItem({ item, onToggle, onDelete, onUpdatePrix, onT
             <img
               src={item.photo}
               alt={item.nom}
-              className="max-w-full max-h-full rounded-2xl shadow-2xl"
+              className="max-w-full max-h-[80vh] rounded-2xl shadow-2xl"
             />
+            <p className="text-white text-center text-base font-medium max-w-md break-words">
+              {item.nom}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

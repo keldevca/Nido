@@ -46,3 +46,9 @@ model PushSubscription {
 
   @@index([userName])
 }
+
+model Store {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}

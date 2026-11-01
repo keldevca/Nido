@@ -9,7 +9,6 @@ import AddCourseForm from "./AddCourseForm";
 import CoursesTotalBar from "./CoursesTotalBar";
 import { CATEGORIES, calculerTaxes } from "@/lib/taxes";
 import { apiPath } from "@/lib/api";
-import { listStores } from "@/lib/stores";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -25,15 +24,36 @@ export type Course = {
   coche: boolean;
 };
 
+type GroupBy = "store" | "category";
+
+const NO_STORE = "Sans magasin";
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex-shrink-0 text-sm px-3 py-1.5 rounded-full border transition-colors ${
+        active
+          ? "bg-accent border-accent text-white"
+          : "border-slate-700 text-slate-400 hover:text-slate-200"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function CoursesList() {
   const { data, mutate } = useSWR<Course[]>(apiPath("/api/courses"), fetcher, {
     refreshInterval: 5000,
   });
 
   const [storeFilter, setStoreFilter] = useState<string | null>(null);
+  const [groupBy, setGroupBy] = useState<GroupBy>("store");
 
   const allItems = data ?? [];
-  const usedStores = Array.from(new Set(allItems.map((i) => i.store).filter((s): s is string => !!s)));
+  const usedStores = Array.from(new Set(allItems.map((i) => i.store).filter((s): s is string => !!s)))
+    .sort((a, b) => a.localeCompare(b, "fr"));
   const activeStore = storeFilter && usedStores.includes(storeFilter) ? storeFilter : null;
   const items = activeStore ? allItems.filter((i) => i.store === activeStore) : allItems;
   const nonCoches = items.filter((i) => !i.coche);
@@ -46,35 +66,21 @@ export default function CoursesList() {
   const { tps, tvq } = calculerTaxes(sousTotalTaxable);
   const total = sousTotal + tps + tvq;
 
-  async function toggle(item: Course) {
-    await fetch(apiPath(`/api/courses/${item.id}`), {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coche: !item.coche }),
-    });
-    mutate();
-  }
-
-  async function remove(id: string) {
-    await fetch(apiPath(`/api/courses/${id}`), { method: "DELETE" });
-    mutate();
-  }
-
-  async function updatePrix(id: string, prix: number | null) {
+  async function update(id: string, changes: Partial<Course>) {
     await fetch(apiPath(`/api/courses/${id}`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prix }),
+      body: JSON.stringify(changes),
     });
     mutate();
   }
 
-  async function toggleTaxable(item: Course) {
-    await fetch(apiPath(`/api/courses/${item.id}`), {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ taxable: !item.taxable }),
-    });
+  const toggle = (item: Course) => update(item.id, { coche: !item.coche });
+  const updatePrix = (id: string, prix: number | null) => update(id, { prix });
+  const toggleTaxable = (item: Course) => update(item.id, { taxable: !item.taxable });
+
+  async function remove(id: string) {
+    await fetch(apiPath(`/api/courses/${id}`), { method: "DELETE" });
     mutate();
   }
 
@@ -83,30 +89,35 @@ export default function CoursesList() {
     mutate();
   }
 
-  const grouped = CATEGORIES.reduce<Record<string, Course[]>>((acc, cat) => {
-    const catItems = nonCoches.filter((i) => i.categorie === cat.nom);
-    if (catItems.length) acc[cat.nom] = catItems;
+  const groupKeys = groupBy === "store" ? [...usedStores, NO_STORE] : CATEGORIES.map((c) => c.nom);
+  const groupOf = (i: Course) => (groupBy === "store" ? i.store ?? NO_STORE : i.categorie);
+  const grouped = groupKeys.reduce<Record<string, Course[]>>((acc, key) => {
+    const groupItems = nonCoches.filter((i) => groupOf(i) === key);
+    if (groupItems.length) acc[key] = groupItems;
     return acc;
   }, {});
 
   return (
     <div className="flex flex-col gap-4">
-      <AddCourseForm onAdded={() => mutate()} stores={listStores(usedStores)} />
+      <AddCourseForm onAdded={() => mutate()} />
+
+      {allItems.length > 0 && (
+        <div className="flex gap-2">
+          <Chip active={groupBy === "store"} onClick={() => setGroupBy("store")}>
+            Par magasin
+          </Chip>
+          <Chip active={groupBy === "category"} onClick={() => setGroupBy("category")}>
+            Par catégorie
+          </Chip>
+        </div>
+      )}
 
       {usedStores.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {[null, ...usedStores].map((store) => (
-            <button
-              key={store ?? "all"}
-              onClick={() => setStoreFilter(store)}
-              className={`flex-shrink-0 text-sm px-3 py-1.5 rounded-full border transition-colors ${
-                activeStore === store
-                  ? "bg-accent border-accent text-white"
-                  : "border-slate-700 text-slate-400 hover:text-slate-200"
-              }`}
-            >
+            <Chip key={store ?? "all"} active={activeStore === store} onClick={() => setStoreFilter(store)}>
               {store ?? "Tous"}
-            </button>
+            </Chip>
           ))}
         </div>
       )}
@@ -120,7 +131,7 @@ export default function CoursesList() {
 
       <AnimatePresence>
         {Object.entries(grouped).map(([cat, catItems]) => {
-          const catDef = CATEGORIES.find((c) => c.nom === cat);
+          const catDef = groupBy === "category" ? CATEGORIES.find((c) => c.nom === cat) : undefined;
           return (
             <motion.div
               key={cat}
@@ -152,6 +163,7 @@ export default function CoursesList() {
                     onDelete={remove}
                     onUpdatePrix={updatePrix}
                     onToggleTaxable={toggleTaxable}
+                    onEdit={update}
                   />
                 ))}
               </div>
@@ -186,6 +198,7 @@ export default function CoursesList() {
                 onDelete={remove}
                 onUpdatePrix={updatePrix}
                 onToggleTaxable={toggleTaxable}
+                onEdit={update}
               />
             ))}
           </div>
